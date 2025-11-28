@@ -6,6 +6,9 @@ import './App.css';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
+// Keep server alive by pinging every 4 minutes (Render free tier spins down after 15 min)
+const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutes
+
 function App() {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -89,6 +92,26 @@ function App() {
     return () => {
       newSocket.close();
     };
+  }, []);
+
+  // Keep-alive ping to prevent Render free tier from spinning down
+  useEffect(() => {
+    const pingServer = async () => {
+      try {
+        await fetch(`${SERVER_URL}/ping`);
+        console.log('Keep-alive ping sent');
+      } catch (err) {
+        console.log('Keep-alive ping failed:', err.message);
+      }
+    };
+
+    // Initial ping
+    pingServer();
+
+    // Set up interval
+    const interval = setInterval(pingServer, KEEP_ALIVE_INTERVAL);
+
+    return () => clearInterval(interval);
   }, []);
 
   const addNotification = useCallback((message) => {

@@ -32,6 +32,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Keep-alive ping endpoint (lightweight)
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
