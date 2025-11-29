@@ -41,6 +41,19 @@ function getNumberColor(num) {
   return '#2c2c2c';
 }
 
+// Get terrain resource icon
+function getTerrainIcon(terrain) {
+  const icons = {
+    'forest': '🌲',
+    'hills': '🧱',
+    'pasture': '🐑',
+    'fields': '🌾',
+    'mountains': '⛰️',
+    'desert': '🏜️'
+  };
+  return icons[terrain] || '';
+}
+
 // Create a position key for deduplication (rounded to avoid float issues)
 function posKey(x, y) {
   return `${Math.round(x * 10)},${Math.round(y * 10)}`;
@@ -277,6 +290,76 @@ function HexBoard({
           <path d="M0 25 Q7.5 20, 15 25 T30 25" stroke="#2471a3" strokeWidth="1" fill="none" opacity="0.5"/>
         </pattern>
         
+        {/* Forest pattern - Pine trees */}
+        <pattern id="forest-pattern" patternUnits="userSpaceOnUse" width="24" height="28">
+          <rect width="24" height="28" fill="#2d5a27"/>
+          {/* Tree 1 */}
+          <polygon points="6,24 12,24 9,4" fill="#1a4a1a"/>
+          <polygon points="6.5,20 11.5,20 9,8" fill="#236b23"/>
+          <polygon points="7,16 11,16 9,10" fill="#2d8a2d"/>
+          <rect x="8" y="24" width="2" height="4" fill="#5d4037"/>
+          {/* Tree 2 */}
+          <polygon points="18,28 24,28 21,10" fill="#1a4a1a" opacity="0.7"/>
+          <polygon points="18.5,24 23.5,24 21,14" fill="#236b23" opacity="0.7"/>
+        </pattern>
+        
+        {/* Hills pattern - Clay/Brick texture */}
+        <pattern id="hills-pattern" patternUnits="userSpaceOnUse" width="20" height="16">
+          <rect width="20" height="16" fill="#c45a2c"/>
+          <rect x="0" y="0" width="9" height="7" fill="#b84a1c" rx="1"/>
+          <rect x="10" y="0" width="9" height="7" fill="#d46a3c" rx="1"/>
+          <rect x="5" y="8" width="9" height="7" fill="#b84a1c" rx="1"/>
+          <rect x="15" y="8" width="5" height="7" fill="#d46a3c" rx="1"/>
+          <rect x="0" y="8" width="4" height="7" fill="#d46a3c" rx="1"/>
+        </pattern>
+        
+        {/* Pasture pattern - Meadow with grass */}
+        <pattern id="pasture-pattern" patternUnits="userSpaceOnUse" width="30" height="30">
+          <rect width="30" height="30" fill="#90c26a"/>
+          {/* Grass tufts */}
+          <path d="M5,28 Q6,22 5,20 M7,28 Q8,24 7,22 M9,28 Q10,23 9,21" stroke="#6ba352" strokeWidth="1.5" fill="none"/>
+          <path d="M20,28 Q21,23 20,21 M22,28 Q23,25 22,23 M24,28 Q25,24 24,22" stroke="#6ba352" strokeWidth="1.5" fill="none"/>
+          {/* Sheep */}
+          <ellipse cx="15" cy="15" rx="5" ry="3" fill="#f5f5f5" opacity="0.6"/>
+          <circle cx="11" cy="14" r="2" fill="#f5f5f5" opacity="0.6"/>
+        </pattern>
+        
+        {/* Fields pattern - Wheat/Grain */}
+        <pattern id="fields-pattern" patternUnits="userSpaceOnUse" width="16" height="24">
+          <rect width="16" height="24" fill="#d4a942"/>
+          {/* Wheat stalks */}
+          <line x1="4" y1="24" x2="4" y2="6" stroke="#c49932" strokeWidth="1"/>
+          <ellipse cx="4" cy="6" rx="2" ry="4" fill="#e8c050"/>
+          <line x1="12" y1="24" x2="12" y2="8" stroke="#c49932" strokeWidth="1"/>
+          <ellipse cx="12" cy="8" rx="2" ry="4" fill="#e8c050"/>
+          <line x1="8" y1="24" x2="8" y2="10" stroke="#b08828" strokeWidth="1"/>
+          <ellipse cx="8" cy="10" rx="2" ry="3.5" fill="#d4b040"/>
+        </pattern>
+        
+        {/* Mountains pattern - Rocky peaks */}
+        <pattern id="mountains-pattern" patternUnits="userSpaceOnUse" width="40" height="30">
+          <rect width="40" height="30" fill="#6b6b6b"/>
+          {/* Mountain 1 */}
+          <polygon points="0,30 20,5 40,30" fill="#5a5a5a"/>
+          <polygon points="10,30 20,10 30,30" fill="#7a7a7a"/>
+          {/* Snow cap */}
+          <polygon points="17,10 20,5 23,10 20,12" fill="#e8e8e8"/>
+          {/* Rocky texture */}
+          <line x1="8" y1="25" x2="12" y2="20" stroke="#4a4a4a" strokeWidth="1"/>
+          <line x1="28" y1="25" x2="32" y2="18" stroke="#4a4a4a" strokeWidth="1"/>
+        </pattern>
+        
+        {/* Desert pattern - Sand dunes */}
+        <pattern id="desert-pattern" patternUnits="userSpaceOnUse" width="40" height="20">
+          <rect width="40" height="20" fill="#e8d5a3"/>
+          {/* Sand dunes */}
+          <path d="M0,18 Q10,12 20,18 Q30,12 40,18" fill="#dcc890" opacity="0.6"/>
+          <path d="M0,14 Q10,8 20,14 Q30,8 40,14" fill="#d4c080" opacity="0.4"/>
+          {/* Cactus */}
+          <rect x="30" y="8" width="2" height="10" fill="#5a8a3a" rx="1"/>
+          <rect x="26" y="11" width="6" height="2" fill="#5a8a3a" rx="1"/>
+        </pattern>
+        
         {/* Drop shadow */}
         <filter id="hex-shadow" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.4"/>
@@ -303,6 +386,19 @@ function HexBoard({
           const pos = axialToPixel(hex.q, hex.r);
           const isRobberHere = robber === key;
           
+          // Get pattern ID based on terrain type
+          const getTerrainPattern = (terrain) => {
+            const patterns = {
+              'forest': 'url(#forest-pattern)',
+              'hills': 'url(#hills-pattern)',
+              'pasture': 'url(#pasture-pattern)',
+              'fields': 'url(#fields-pattern)',
+              'mountains': 'url(#mountains-pattern)',
+              'desert': 'url(#desert-pattern)'
+            };
+            return patterns[terrain] || hex.color;
+          };
+          
           return (
             <g 
               key={key} 
@@ -311,7 +407,7 @@ function HexBoard({
               onContextMenu={(e) => onHexRightClick && onHexRightClick(e, hex)}
               style={{ cursor: 'context-menu' }}
             >
-              {/* Hex shape with border */}
+              {/* Base color layer */}
               <path
                 d={hexPath(pos.x, pos.y, HEX_SIZE)}
                 fill={hex.color}
@@ -320,12 +416,19 @@ function HexBoard({
                 filter="url(#hex-shadow)"
               />
               
+              {/* Pattern overlay */}
+              <path
+                d={hexPath(pos.x, pos.y, HEX_SIZE - 2)}
+                fill={getTerrainPattern(hex.terrain)}
+                opacity="0.85"
+              />
+              
               {/* Inner hex highlight */}
               <path
                 d={hexPath(pos.x, pos.y, HEX_SIZE - 4)}
                 fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth="1"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth="1.5"
               />
               
               {/* Number token */}
@@ -362,6 +465,18 @@ function HexBoard({
                   </text>
                 </g>
               )}
+              
+              {/* Resource icon at bottom of hex */}
+              <text
+                x={pos.x}
+                y={pos.y + 32}
+                textAnchor="middle"
+                fontSize="16"
+                opacity="0.8"
+                style={{ pointerEvents: 'none' }}
+              >
+                {getTerrainIcon(hex.terrain)}
+              </text>
               
               {/* Robber */}
               {isRobberHere && (
