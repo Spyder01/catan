@@ -17,22 +17,23 @@ A real-time multiplayer implementation of the classic Settlers of Catan board ga
 
 ## 🎮 How to Play
 
-1. **Create or Join** - One player creates a game and shares the 6-letter code
-2. **Setup Phase** - Each player places 2 settlements and 2 roads
-3. **Main Game** - Roll dice, collect resources, build, and trade
-4. **Win** - First player to reach 10 Victory Points wins!
+1. **Game link** - https://catan-game-0x1s.onrender.com
+2. **Create or Join** - One player creates a game and shares the 6-letter code
+3. **Setup Phase** - Each player places 2 settlements and 2 roads
+4. **Main Game** - Roll dice, collect resources, build, and trade
+5. **Win** - First player to reach 10 Victory Points wins!
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Prerequisites (for debugging)
 - Node.js 18+
 - npm
 
-### Run Locally
+### Run Locally (for debugging)
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/catan.git
+git clone https://github.com/Viral-Doshi/catan.git
 cd catan
 
 # Start the server
@@ -50,20 +51,9 @@ Open http://localhost:5173 in your browser.
 
 ## 🌐 Deployment
 
-### Deploy to Render.com (Free)
-
-**1. Deploy Backend:**
-- New → Web Service → Connect your repo
-- Root Directory: `server`
-- Build: `npm install`
-- Start: `node index.js`
-
-**2. Deploy Frontend:**
-- New → Static Site → Connect your repo
-- Root Directory: `client`
-- Build: `npm install && npm run build`
-- Publish: `dist`
-- Add env variable: `VITE_SERVER_URL` = your backend URL
+### Deployed to Render.com (Free tier - 0.1 cpu)
+Link: https://catan-game-0x1s.onrender.com
+Note that first request to backend might be slow (up to 30 seconds) because it is a free tier. After that, everything should be fast (not tested for increased load) and smooth.
 
 ## 🛠️ Tech Stack
 
@@ -74,22 +64,6 @@ Open http://localhost:5173 in your browser.
 | Real-time | Socket.io |
 | Styling | CSS3 with CSS Variables |
 
-## 📁 Project Structure
-
-```
-catan/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/    # UI components
-│   │   ├── App.jsx        # Main app
-│   │   └── main.jsx       # Entry point
-│   └── package.json
-├── server/                 # Node.js backend
-│   ├── gameLogic.js       # Game rules engine
-│   ├── index.js           # Socket.io server
-│   └── package.json
-└── README.md
-```
 
 ## 🎯 Game Rules Quick Reference
 
@@ -105,6 +79,7 @@ catan/
 ## 👤 Author
 
 **Viral Doshi**
+LinkedIn - https://www.linkedin.com/in/doshi-viral/
 
 ## 📄 License
 
