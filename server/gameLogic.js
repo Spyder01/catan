@@ -208,14 +208,15 @@ export function normalizeVertex(hexQ, hexR, dir, hexes) {
 
 // Get equivalent vertex positions for POINTY-TOP hex
 // Each vertex is shared by exactly 3 hexes
+// VERIFIED BY PIXEL POSITION CALCULATIONS
 function getEquivalentVertices(q, r, dir) {
   const equivalents = [
     { q, r, dir }
   ];
   
-  // POINTY-TOP: vertex sharing based on direction
-  if (dir === 0) { // top - shared with (q, r-1) vertex 3 and (q+1, r-1) vertex 4
-    equivalents.push({ q: q, r: r - 1, dir: 3 });
+  // POINTY-TOP: vertex sharing based on direction (verified with pixel positions)
+  if (dir === 0) { // top - shared with (q, r-1) vertex 2 and (q+1, r-1) vertex 4
+    equivalents.push({ q: q, r: r - 1, dir: 2 });
     equivalents.push({ q: q + 1, r: r - 1, dir: 4 });
   } else if (dir === 1) { // upper-right - shared with (q+1, r-1) vertex 3 and (q+1, r) vertex 5
     equivalents.push({ q: q + 1, r: r - 1, dir: 3 });
@@ -223,22 +224,22 @@ function getEquivalentVertices(q, r, dir) {
   } else if (dir === 2) { // lower-right - shared with (q+1, r) vertex 4 and (q, r+1) vertex 0
     equivalents.push({ q: q + 1, r: r, dir: 4 });
     equivalents.push({ q: q, r: r + 1, dir: 0 });
-  } else if (dir === 3) { // bottom - shared with (q, r+1) vertex 0 and (q-1, r+1) vertex 1
-    equivalents.push({ q: q, r: r + 1, dir: 0 });
+  } else if (dir === 3) { // bottom - shared with (q, r+1) vertex 5 and (q-1, r+1) vertex 1
+    equivalents.push({ q: q, r: r + 1, dir: 5 });
     equivalents.push({ q: q - 1, r: r + 1, dir: 1 });
   } else if (dir === 4) { // lower-left - shared with (q-1, r+1) vertex 0 and (q-1, r) vertex 2
     equivalents.push({ q: q - 1, r: r + 1, dir: 0 });
     equivalents.push({ q: q - 1, r: r, dir: 2 });
-  } else if (dir === 5) { // upper-left - shared with (q-1, r) vertex 1 and (q, r-1) vertex 2
+  } else if (dir === 5) { // upper-left - shared with (q-1, r) vertex 1 and (q, r-1) vertex 3
     equivalents.push({ q: q - 1, r: r, dir: 1 });
-    equivalents.push({ q: q, r: r - 1, dir: 2 });
+    equivalents.push({ q: q, r: r - 1, dir: 3 });
   }
   
   return equivalents;
 }
 
 // Check if two vertex keys refer to the same physical vertex position
-function areVerticesEqual(vKey1, vKey2) {
+export function areVerticesEqual(vKey1, vKey2) {
   if (vKey1 === vKey2) return true;
   
   const match1 = vKey1.match(/v_(-?\d+)_(-?\d+)_(\d+)/);
@@ -387,7 +388,7 @@ function findBuildingAtHexVertex(game, q, r, dir) {
 
 // Get equivalent edge positions for POINTY-TOP hex
 // Each edge is shared by exactly 2 hexes
-function getEquivalentEdges(q, r, dir) {
+export function getEquivalentEdges(q, r, dir) {
   const equivalents = [{ q, r, dir }];
   
   // POINTY-TOP: edge sharing based on direction
@@ -434,34 +435,38 @@ function hasPlayerRoadAtEdge(game, eKey, playerIndex) {
 
 // Get edges adjacent to a vertex for POINTY-TOP hex (from one hex's perspective)
 // Edge direction: 0=upper-right, 1=right, 2=lower-right, 3=lower-left, 4=left, 5=upper-left
+// VERIFIED BY ALGEBRAIC EDGE EQUIVALENCE CALCULATIONS
+// NOTE: Third edge is the unique edge from neighboring hexes (not equivalent to the first two)
 function getVertexEdgesFromHex(q, r, dir) {
   const edges = [];
   
   // POINTY-TOP vertex to edge mapping
-  if (dir === 0) { // top vertex - touches edges 5 (upper-left) and 0 (upper-right) of this hex
-    edges.push(edgeKey(q, r, 5)); // upper-left edge
-    edges.push(edgeKey(q, r, 0)); // upper-right edge
-    edges.push(edgeKey(q, r - 1, 2)); // lower-right edge of hex above-left
+  // For each vertex: two edges from this hex + one unique edge from neighbors
+  // The third edge is calculated to NOT be equivalent to the first two
+  if (dir === 0) { // top vertex
+    edges.push(edgeKey(q, r, 5)); // e_5 (connects v5-v0)
+    edges.push(edgeKey(q, r, 0)); // e_0 (connects v0-v1)
+    edges.push(edgeKey(q, r - 1, 1)); // third unique: e_1 of (q, r-1) = e_4 of (q+1, r-1)
   } else if (dir === 1) { // upper-right vertex
-    edges.push(edgeKey(q, r, 0)); // upper-right edge
-    edges.push(edgeKey(q, r, 1)); // right edge
-    edges.push(edgeKey(q + 1, r - 1, 3)); // lower-left edge of hex above-right
+    edges.push(edgeKey(q, r, 0)); // e_0 (connects v0-v1)
+    edges.push(edgeKey(q, r, 1)); // e_1 (connects v1-v2)
+    edges.push(edgeKey(q + 1, r - 1, 2)); // third unique: e_2 of (q+1, r-1) = e_5 of (q+1, r)
   } else if (dir === 2) { // lower-right vertex
-    edges.push(edgeKey(q, r, 1)); // right edge
-    edges.push(edgeKey(q, r, 2)); // lower-right edge
-    edges.push(edgeKey(q + 1, r, 4)); // left edge of hex to the right
+    edges.push(edgeKey(q, r, 1)); // e_1 (connects v1-v2)
+    edges.push(edgeKey(q, r, 2)); // e_2 (connects v2-v3)
+    edges.push(edgeKey(q + 1, r, 3)); // third unique: e_3 of (q+1, r) = e_0 of (q, r+1)
   } else if (dir === 3) { // bottom vertex
-    edges.push(edgeKey(q, r, 2)); // lower-right edge
-    edges.push(edgeKey(q, r, 3)); // lower-left edge
-    edges.push(edgeKey(q, r + 1, 5)); // upper-left edge of hex below-right
+    edges.push(edgeKey(q, r, 2)); // e_2 (connects v2-v3)
+    edges.push(edgeKey(q, r, 3)); // e_3 (connects v3-v4)
+    edges.push(edgeKey(q, r + 1, 4)); // third unique: e_4 of (q, r+1) = e_1 of (q-1, r+1)
   } else if (dir === 4) { // lower-left vertex
-    edges.push(edgeKey(q, r, 3)); // lower-left edge
-    edges.push(edgeKey(q, r, 4)); // left edge
-    edges.push(edgeKey(q - 1, r + 1, 0)); // upper-right edge of hex below-left
+    edges.push(edgeKey(q, r, 3)); // e_3 (connects v3-v4)
+    edges.push(edgeKey(q, r, 4)); // e_4 (connects v4-v5)
+    edges.push(edgeKey(q - 1, r + 1, 5)); // third unique: e_5 of (q-1, r+1) = e_2 of (q-1, r)
   } else if (dir === 5) { // upper-left vertex
-    edges.push(edgeKey(q, r, 4)); // left edge
-    edges.push(edgeKey(q, r, 5)); // upper-left edge
-    edges.push(edgeKey(q - 1, r, 1)); // right edge of hex to the left
+    edges.push(edgeKey(q, r, 4)); // e_4 (connects v4-v5)
+    edges.push(edgeKey(q, r, 5)); // e_5 (connects v5-v0)
+    edges.push(edgeKey(q - 1, r, 0)); // third unique: e_0 of (q-1, r) = e_3 of (q, r-1)
   }
   
   return edges;
@@ -479,18 +484,37 @@ export function getVertexEdges(vKey) {
   // Get all equivalent vertex representations
   const equivalentVertices = getEquivalentVertices(q, r, dir);
   
-  // Collect all edges from all equivalent vertices
-  const allEdges = new Set();
+  // Helper to get canonical edge key for deduplication
+  function getCanonicalEdgeKey(eKey) {
+    const eMatch = eKey.match(/e_(-?\d+)_(-?\d+)_(\d+)/);
+    if (!eMatch) return eKey;
+    const equivs = getEquivalentEdges(parseInt(eMatch[1]), parseInt(eMatch[2]), parseInt(eMatch[3]));
+    // Use the edge key with smallest coordinates as canonical
+    equivs.sort((a, b) => a.q - b.q || a.r - b.r || a.dir - b.dir);
+    return edgeKey(equivs[0].q, equivs[0].r, equivs[0].dir);
+  }
+  
+  // Collect all edges from all equivalent vertices, using canonical keys to prevent duplicates
+  const canonicalEdges = new Map(); // canonical key -> original key
   
   for (const v of equivalentVertices) {
     const edges = getVertexEdgesFromHex(v.q, v.r, v.dir);
-    edges.forEach(e => allEdges.add(e));
+    for (const e of edges) {
+      const canonical = getCanonicalEdgeKey(e);
+      if (!canonicalEdges.has(canonical)) {
+        canonicalEdges.set(canonical, e);
+      }
+    }
   }
   
-  return Array.from(allEdges);
+  // Return the original edge keys (not canonical) for compatibility
+  return Array.from(canonicalEdges.values());
 }
 
 // Get adjacent vertices (for distance rule) for POINTY-TOP hex
+// VERIFIED BY PIXEL POSITION CALCULATIONS AND EDGE CONNECTIVITY
+// Each vertex has 3 adjacent vertices: 2 on same hex (nextDir, prevDir) + 1 on neighboring hex
+// The third adjacent is at the OTHER END of the third edge (the unique edge from a neighbor hex)
 export function getAdjacentVertices(vKey, hexes) {
   const match = vKey.match(/v_(-?\d+)_(-?\d+)_(\d+)/);
   if (!match) return [];
@@ -510,12 +534,22 @@ export function getAdjacentVertices(vKey, hexes) {
   adjacent.push(vertexKey(q, r, prevDir));
   
   // Third adjacent vertex on a neighboring hex (POINTY-TOP)
-  if (dir === 0) adjacent.push(vertexKey(q, r - 1, 2)); // top -> bottom-right of hex above-left
-  else if (dir === 1) adjacent.push(vertexKey(q + 1, r - 1, 4)); // upper-right -> lower-left of hex above-right
-  else if (dir === 2) adjacent.push(vertexKey(q + 1, r, 5)); // lower-right -> upper-left of hex right
-  else if (dir === 3) adjacent.push(vertexKey(q, r + 1, 5)); // bottom -> upper-left of hex below-right
-  else if (dir === 4) adjacent.push(vertexKey(q - 1, r + 1, 1)); // lower-left -> upper-right of hex below-left
-  else if (dir === 5) adjacent.push(vertexKey(q - 1, r, 2)); // upper-left -> lower-right of hex left
+  // Logic: Get the third edge from getVertexEdgesFromHex, find the vertex at its OTHER end
+  // Each edge connects two vertices that are +1/-1 apart in direction
+  //
+  // For vertex dir on hex (q,r), equivalent vertex is on neighbor hex:
+  //   dir 0 → equiv (q, r-1) dir 2 → third edge e_1 of (q,r-1) connects v1-v2 → other end is v1
+  //   dir 1 → equiv (q+1, r-1) dir 3 → third edge e_2 of (q+1,r-1) connects v2-v3 → other end is v2
+  //   dir 2 → equiv (q+1, r) dir 4 → third edge e_3 of (q+1,r) connects v3-v4 → other end is v3
+  //   dir 3 → equiv (q, r+1) dir 5 → third edge e_4 of (q,r+1) connects v4-v5 → other end is v4
+  //   dir 4 → equiv (q-1, r+1) dir 0 → third edge e_5 of (q-1,r+1) connects v5-v0 → other end is v5
+  //   dir 5 → equiv (q-1, r) dir 1 → third edge e_0 of (q-1,r) connects v0-v1 → other end is v0
+  if (dir === 0) adjacent.push(vertexKey(q, r - 1, 1));
+  else if (dir === 1) adjacent.push(vertexKey(q + 1, r - 1, 2));
+  else if (dir === 2) adjacent.push(vertexKey(q + 1, r, 3));
+  else if (dir === 3) adjacent.push(vertexKey(q, r + 1, 4));
+  else if (dir === 4) adjacent.push(vertexKey(q - 1, r + 1, 5));
+  else if (dir === 5) adjacent.push(vertexKey(q - 1, r, 0));
   
   return adjacent;
 }
@@ -793,9 +827,10 @@ function distributeResources(game, roll) {
     gains[idx] = { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 };
   });
   
-  // Track which (player, resource, physical_vertex) combinations have already received resources
-  // This prevents double-counting when two hexes with same number & resource share a vertex
-  const processedGains = new Set();
+  // Track which (hex, physical_vertex) combinations have already been processed
+  // This prevents double-counting the same vertex for the SAME hex (which shouldn't happen anyway)
+  // But we DO want to count the same vertex for DIFFERENT hexes (that's the Catan rule!)
+  const processedHexVertices = new Set();
   
   Object.entries(game.hexes).forEach(([hKey, hex]) => {
     if (hex.number === roll && hKey !== game.robber) {
@@ -804,11 +839,12 @@ function distributeResources(game, roll) {
         const buildingInfo = findBuildingAtHexVertex(game, hex.q, hex.r, dir);
         
         if (buildingInfo && buildingInfo.owner !== null && hex.resource) {
-          // Create a unique key using the PHYSICAL vertex position and resource
-          // This prevents same settlement getting same resource twice from two adjacent hexes with same number
-          const physicalKey = `${buildingInfo.vertexKey},${hex.resource}`;
-          if (processedGains.has(physicalKey)) continue;
-          processedGains.add(physicalKey);
+          // Create a unique key for this HEX-VERTEX combination
+          // This prevents the same hex from giving resources to the same vertex twice
+          // (which could happen if we find the same building under different vertex key formats)
+          const hexVertexKey = `${hKey},${buildingInfo.vertexKey}`;
+          if (processedHexVertices.has(hexVertexKey)) continue;
+          processedHexVertices.add(hexVertexKey);
           
           const player = game.players[buildingInfo.owner];
           const amount = buildingInfo.type === 'city' ? 2 : 1;
@@ -972,7 +1008,7 @@ export function placeSettlement(game, playerId, vKey) {
     deductResources(player, BUILDING_COSTS.settlement);
   }
   
-  // Place settlement
+  // Place settlement - stored at the key provided, lookups check all equivalents
   game.vertices[vKey] = { building: 'settlement', owner: playerIndex };
   player.settlements--;
   player.victoryPoints++;
@@ -1045,7 +1081,10 @@ export function canPlaceRoad(game, playerId, eKey, isSetup = false, lastSettleme
   const edge = game.edges[eKey];
   
   if (!edge) return { valid: false, error: 'Invalid edge' };
-  if (edge.road) return { valid: false, error: 'Road already exists' };
+  
+  // Check for existing road on this edge OR any equivalent edge
+  // This prevents the same physical edge from having roads placed under different key formats
+  if (hasRoadAtEdge(game, eKey)) return { valid: false, error: 'Road already exists' };
   if (player.roads <= 0) return { valid: false, error: 'No roads left' };
   
   // Parse edge key
@@ -1147,7 +1186,8 @@ export function placeRoad(game, playerId, eKey, isSetup = false, lastSettlement 
     game.freeRoads--;
   }
   
-  // Place road
+  // Place road using the canonical edge key to ensure consistency
+  // All lookups use hasRoadAtEdge which checks all equivalents, so this is safe
   game.edges[eKey] = { road: true, owner: playerIndex };
   player.roads--;
   
@@ -1733,63 +1773,130 @@ function hasOpponentBuildingAtVertex(game, vKey, playerIndex) {
   return false;
 }
 
-function updateLongestRoad(game) {
-  let longestPlayer = null;
-  let longestLength = game.longestRoadLength;
-  
-  game.players.forEach((player, idx) => {
+export function updateLongestRoad(game) {
+  // Calculate road lengths for all players
+  const roadLengths = game.players.map((player, idx) => {
     const length = calculateRoadLength(game, idx);
     player.roadLength = length;
-    
-    if (length > longestLength) {
-      longestLength = length;
-      longestPlayer = idx;
-    }
+    return { playerIndex: idx, length };
   });
   
-  if (longestPlayer !== null && longestPlayer !== game.longestRoadPlayer) {
-    // Remove from previous holder
+  // Find the maximum road length among all players
+  const maxLength = Math.max(...roadLengths.map(r => r.length));
+  
+  // Must have at least 5 roads to claim longest road
+  if (maxLength < 5) {
+    // If current holder's road dropped below 5, they lose it
+    if (game.longestRoadPlayer !== null) {
+      game.players[game.longestRoadPlayer].hasLongestRoad = false;
+      game.players[game.longestRoadPlayer].victoryPoints -= 2;
+      game.longestRoadPlayer = null;
+      game.longestRoadLength = 4;
+      checkWinner(game);
+    }
+    return;
+  }
+  
+  // Find all players with the maximum length
+  const playersWithMax = roadLengths.filter(r => r.length === maxLength);
+  
+  // Current holder's road length
+  const currentHolderLength = game.longestRoadPlayer !== null 
+    ? game.players[game.longestRoadPlayer].roadLength 
+    : 0;
+  
+  // Check if current holder still has the max length (they keep it on ties)
+  const currentHolderHasMax = game.longestRoadPlayer !== null && 
+    game.players[game.longestRoadPlayer].roadLength === maxLength;
+  
+  if (currentHolderHasMax) {
+    // Current holder keeps it, but update the stored length
+    game.longestRoadLength = maxLength;
+    return;
+  }
+  
+  // If there's a tie and no current holder has max, check if only one player has max
+  if (playersWithMax.length === 1) {
+    const newHolder = playersWithMax[0].playerIndex;
+    
+    // New player takes longest road
     if (game.longestRoadPlayer !== null) {
       game.players[game.longestRoadPlayer].hasLongestRoad = false;
       game.players[game.longestRoadPlayer].victoryPoints -= 2;
     }
     
-    // Give to new holder
-    game.longestRoadPlayer = longestPlayer;
-    game.longestRoadLength = longestLength;
-    game.players[longestPlayer].hasLongestRoad = true;
-    game.players[longestPlayer].victoryPoints += 2;
+    game.longestRoadPlayer = newHolder;
+    game.longestRoadLength = maxLength;
+    game.players[newHolder].hasLongestRoad = true;
+    game.players[newHolder].victoryPoints += 2;
+    
+    checkWinner(game);
+  } else if (playersWithMax.length > 1 && game.longestRoadPlayer !== null && 
+             !currentHolderHasMax) {
+    // Tie between multiple players and current holder is NOT one of them
+    // Current holder loses it, but no one gets it (disputed)
+    game.players[game.longestRoadPlayer].hasLongestRoad = false;
+    game.players[game.longestRoadPlayer].victoryPoints -= 2;
+    game.longestRoadPlayer = null;
+    game.longestRoadLength = maxLength; // Keep tracking the max for future reference
     
     checkWinner(game);
   }
+  // If tie and no current holder, no one gets it (stays null)
 }
 
 function updateLargestArmy(game) {
-  let largestPlayer = null;
-  let largestSize = game.largestArmySize;
+  // Find the maximum knights played among all players
+  const maxKnights = Math.max(...game.players.map(p => p.knightsPlayed));
   
-  game.players.forEach((player, idx) => {
-    if (player.knightsPlayed > largestSize) {
-      largestSize = player.knightsPlayed;
-      largestPlayer = idx;
-    }
-  });
+  // Must have at least 3 knights to claim largest army
+  if (maxKnights < 3) {
+    return;
+  }
   
-  if (largestPlayer !== null && largestPlayer !== game.largestArmyPlayer) {
-    // Remove from previous holder
+  // Find all players with the maximum knights
+  const playersWithMax = game.players
+    .map((p, idx) => ({ playerIndex: idx, knights: p.knightsPlayed }))
+    .filter(p => p.knights === maxKnights);
+  
+  // Check if current holder still has the max (they keep it on ties)
+  const currentHolderHasMax = game.largestArmyPlayer !== null && 
+    game.players[game.largestArmyPlayer].knightsPlayed === maxKnights;
+  
+  if (currentHolderHasMax) {
+    // Current holder keeps it, but update the stored size
+    game.largestArmySize = maxKnights;
+    return;
+  }
+  
+  // If only one player has max, they get it
+  if (playersWithMax.length === 1) {
+    const newHolder = playersWithMax[0].playerIndex;
+    
+    // New player takes largest army
     if (game.largestArmyPlayer !== null) {
       game.players[game.largestArmyPlayer].hasLargestArmy = false;
       game.players[game.largestArmyPlayer].victoryPoints -= 2;
     }
     
-    // Give to new holder
-    game.largestArmyPlayer = largestPlayer;
-    game.largestArmySize = largestSize;
-    game.players[largestPlayer].hasLargestArmy = true;
-    game.players[largestPlayer].victoryPoints += 2;
+    game.largestArmyPlayer = newHolder;
+    game.largestArmySize = maxKnights;
+    game.players[newHolder].hasLargestArmy = true;
+    game.players[newHolder].victoryPoints += 2;
+    
+    checkWinner(game);
+  } else if (playersWithMax.length > 1 && game.largestArmyPlayer !== null && 
+             !currentHolderHasMax) {
+    // Tie between multiple players and current holder is NOT one of them
+    // Current holder loses it, but no one gets it (disputed)
+    game.players[game.largestArmyPlayer].hasLargestArmy = false;
+    game.players[game.largestArmyPlayer].victoryPoints -= 2;
+    game.largestArmyPlayer = null;
+    game.largestArmySize = maxKnights;
     
     checkWinner(game);
   }
+  // If tie and no current holder, no one gets it (stays null)
 }
 
 function checkWinner(game) {
@@ -1799,9 +1906,13 @@ function checkWinner(game) {
     if (totalVP >= 10) {
       game.phase = 'finished';
       game.winner = player.id;
-      // Reveal hidden VP when game ends
-      player.victoryPoints = totalVP;
-      player.hiddenVictoryPoints = 0;
+      
+      // Reveal ALL players' hidden VPs when game ends (so everyone can see final scores)
+      for (const p of game.players) {
+        const pTotalVP = p.victoryPoints + (p.hiddenVictoryPoints || 0);
+        p.victoryPoints = pTotalVP;
+        p.hiddenVictoryPoints = 0;
+      }
       return;
     }
   }
@@ -1820,15 +1931,22 @@ export function getPlayerView(game, playerId) {
     ore: getTradeRatio(game, playerIndex, 'ore')
   };
   
+  // After game ends, all information is public
+  const isGameOver = game.phase === 'finished';
+  
   return {
     ...game,
     players: game.players.map((p, idx) => ({
       ...p,
-      developmentCards: idx === playerIndex ? p.developmentCards : p.developmentCards.length,
-      newDevCards: idx === playerIndex ? p.newDevCards : p.newDevCards.length,
-      resources: idx === playerIndex ? p.resources : Object.values(p.resources).reduce((a, b) => a + b, 0),
-      // Only show hidden VP to the player themselves
-      hiddenVictoryPoints: idx === playerIndex ? p.hiddenVictoryPoints : 0
+      // After game over, show everyone's dev cards; during game, only show own cards
+      developmentCards: isGameOver || idx === playerIndex ? p.developmentCards : p.developmentCards.length,
+      newDevCards: isGameOver || idx === playerIndex ? p.newDevCards : p.newDevCards.length,
+      // After game over, show everyone's resources; during game, only show own resources
+      resources: isGameOver || idx === playerIndex ? p.resources : Object.values(p.resources).reduce((a, b) => a + b, 0),
+      // After game over, show everyone's hidden VP; during game, only show own
+      // (Note: hidden VPs should already be moved to victoryPoints when game ends, 
+      // but this is a safety check)
+      hiddenVictoryPoints: isGameOver || idx === playerIndex ? p.hiddenVictoryPoints : 0
     })),
     devCardDeck: game.devCardDeck.length,
     myIndex: playerIndex,
