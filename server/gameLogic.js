@@ -666,7 +666,8 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
     discardingPlayers: [],
     freeRoads: 0, // For road building card
     yearOfPlentyPicks: 0, // For year of plenty card
-    devCardPlayedThisTurn: false // Can only play one dev card per turn
+    devCardPlayedThisTurn: false, // Can only play one dev card per turn
+    hasRolledThisTurn: false // Track if dice have been rolled (for dev card + robber flow)
   };
 }
 
@@ -790,6 +791,7 @@ export function rollDice(game, playerId) {
   const total = die1 + die2;
   
   game.diceRoll = { die1, die2, total };
+  game.hasRolledThisTurn = true;
   
   if (total === 7) {
     // Check if any player has more than 7 cards
@@ -949,7 +951,9 @@ export function moveRobber(game, playerId, hexKey, stealFromPlayerId) {
     }
   }
   
-  game.turnPhase = 'main';
+  // Return to appropriate phase based on whether dice have been rolled
+  // This handles the case where Knight is played BEFORE rolling
+  game.turnPhase = game.hasRolledThisTurn ? 'main' : 'roll';
   
   return { success: true, stolenInfo };
 }
@@ -1568,6 +1572,7 @@ export function endTurn(game, playerId) {
   game.freeRoads = 0;
   game.yearOfPlentyPicks = 0;
   game.devCardPlayedThisTurn = false;
+  game.hasRolledThisTurn = false;
   
   // In 5-6 player games, start Special Building Phase (if enabled)
   if (game.isExtended && game.players.length > 4 && game.enableSpecialBuild) {
@@ -1614,6 +1619,7 @@ export function endSpecialBuild(game, playerId) {
     game.currentPlayerIndex = (currentTurnPlayer + 1) % game.players.length;
     game.turnPhase = 'roll';
     game.diceRoll = null;
+    game.hasRolledThisTurn = false;
     return { success: true, specialBuildingPhaseEnded: true };
   }
   
@@ -1951,7 +1957,8 @@ export function getPlayerView(game, playerId) {
     devCardDeck: game.devCardDeck.length,
     myIndex: playerIndex,
     myPorts: getPlayerPorts(game, playerIndex),
-    tradeRatios
+    tradeRatios,
+    hasRolledThisTurn: game.hasRolledThisTurn
   };
 }
 
